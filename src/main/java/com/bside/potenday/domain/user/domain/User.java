@@ -60,4 +60,10 @@ public class User {
         this.marketingInfoAgree = agree;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void updateNickName(String nickname, Job job) {
+        this.nickname = nickname;
+        this.job = job;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
