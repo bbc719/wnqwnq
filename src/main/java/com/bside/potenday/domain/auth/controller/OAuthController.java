@@ -5,6 +5,7 @@ import com.bside.potenday.domain.auth.service.OAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,8 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class OAuthController {
 
-    private final OAuthService oAuthService;
+    @Autowired
+    private OAuthService oAuthService;
     // "https://accounts.google.com/o/oauth2/v2/auth?
     // client_id=56088644141-3f1vl6naah6coacgotdslat9d7fja917.apps.googleusercontent.com
     // &redirect_uri=http://localhost:8080/api/auth/callback

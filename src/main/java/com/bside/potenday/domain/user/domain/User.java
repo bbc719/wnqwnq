@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "user")
 @NoArgsConstructor( access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 @Getter
 public class User {
     @Id
@@ -34,22 +32,19 @@ public class User {
     private Boolean pushNotificationAgree;
     @Column(name = "marketing_info_agree")
     private Boolean marketingInfoAgree;
-//    @Column(name = "created_at")
-//    private LocalDateTime createdAt;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public User(String username, String email, String profileImg, Job job, String nickname, UserOauth userOauth) {
+    public User(String username, String email, String profileImg, UserOauth userOauth) {
         this.username = username;
         this.email = email;
         this.profileImg = profileImg;
-        this.job = job;
-        this.nickname = nickname;
         this.userOauth = userOauth;
         this.marketingInfoAgree = false;
         this.pushNotificationAgree = false;
     }
 
+    @PrePersist
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
@@ -61,9 +56,9 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void updateNickName(String nickname, Job job) {
+    public void updateNickName(String nickname) {
         this.nickname = nickname;
-        this.job = job;
+        this.job = Job.WORKER;
         this.updatedAt = LocalDateTime.now();
     }
 }

@@ -1,11 +1,11 @@
 package com.bside.potenday.domain.auth.domain;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Builder
+@Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class GoogleInfResponse {
     private String iss;
     private String azp;

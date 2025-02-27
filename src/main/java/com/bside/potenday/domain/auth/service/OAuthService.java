@@ -39,19 +39,6 @@ public class OAuthService {
     @Value("${oauth2.google.redirect-uri}")
     private String LOGIN_REDIRECT_URL;
 
-//    public String buildGoogleAuthUrl() {
-//        String baseUrl = "https://accounts.google.com/o/oauth2/v2/auth";
-//        String scope = "openid email profile";
-////        return UriComponentsBuilder.fromHttpUrl(baseUrl)
-////                .queryParam("client-id", GOOGLE_CLIENT_ID)
-////                .queryParam("redirect-uri", LOGIN_REDIRECT_URL)
-////                .queryParam("response_type", "code")
-////                .queryParam("scope", "email%20profile%20openid")
-////                .queryParam("access_type", "offline")
-////                .build().toUriString();
-//        return "https://accounts.google.com/o/oauth2/v2/auth?client_id=56088644141-3f1vl6naah6coacgotdslat9d7fja917.apps.googleusercontent.com&redirect_uri=http://localhost:8080/api/auth/callback&response_type=code&scope=email%20profile";
-//    }
-
     public ResponseEntity<GoogleResponse> getGoogleAccessToken(String authCode) {
         RestTemplate restTemplate = new RestTemplate();
         GoogleRequest googleOAuthRequestParam = GoogleRequest
@@ -62,7 +49,8 @@ public class OAuthService {
                 .redirectUri(LOGIN_REDIRECT_URL)
                 .grantType("authorization_code").build();
 
-        ResponseEntity<GoogleResponse> responseEntity = restTemplate.postForEntity(GOOGLE_TOKEN_URL, googleOAuthRequestParam, GoogleResponse.class);
+        ResponseEntity<GoogleResponse> responseEntity = restTemplate.postForEntity(GOOGLE_TOKEN_URL,
+                googleOAuthRequestParam, GoogleResponse.class);
 
         String jwtToken =  responseEntity.getBody().getId_token();  // id token (=jwt token, 디코딩 후 사용)
 
@@ -73,7 +61,7 @@ public class OAuthService {
 
         // 사용자 정보 저장 후
         // 닉네임 화면으로 return
-        // 닉네임, 직업 정보는 후에 저장
+        // 닉네임 정보는 후에 저장
         String providerId = responseInfEntity.getBody().getSub(); // Google의 고유 사용자 ID
         String email = responseInfEntity.getBody().getEmail();
         String username = responseInfEntity.getBody().getName();
@@ -90,7 +78,7 @@ public class OAuthService {
             // 신규 사용자 생성: UserOauth 내장 객체에 Google OAuth 정보 저장
             UserOauth userOauth = new UserOauth(Provider.GOOGLE, providerId, responseEntity.getBody().getAccess_token(), responseEntity.getBody().getRefresh_token());
             // 생성자에서 createdAt, updatedAt 등을 설정
-            user = new User(username, email, profileImg, Job.WORKER, "칠리새우먹고싶다", userOauth);
+            user = new User(username, email, profileImg, userOauth);
         }
 
         userRepository.save(user);

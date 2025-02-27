@@ -1,11 +1,11 @@
 package com.bside.potenday.domain.user.service;
 
-import com.bside.potenday.domain.user.domain.Job;
+import com.bside.potenday.domain.interest.domain.UserInterest;
 import com.bside.potenday.domain.user.domain.User;
+import com.bside.potenday.domain.user.dto.UserProfileRequest;
 import com.bside.potenday.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +17,15 @@ public class UserService {
     private UserRepository userRepository;
 
     @Transactional
-    public void updateNickname(Long userId, String nickname, Job job) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+    public void updateNickname(UserProfileRequest request) {
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
 
-        user.updateNickName(nickname, job);
+        user.updateNickName(request.getNickname());
+    }
+
+    @Transactional
+    public void saveInterest(UserInterest request) {
+
     }
 }
