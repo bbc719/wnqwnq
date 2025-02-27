@@ -46,7 +46,7 @@ public class OAuthService {
                 .clientId(GOOGLE_CLIENT_ID)
                 .clientSecret(GOOGLE_CLIENT_SECRET)
                 .code(authCode)
-                .redirectUri(LOGIN_REDIRECT_URL)
+                .redirectUri("https://jubjub.kr/api/auth/callback")
                 .grantType("authorization_code").build();
 
         ResponseEntity<GoogleResponse> responseEntity = restTemplate.postForEntity(GOOGLE_TOKEN_URL,
