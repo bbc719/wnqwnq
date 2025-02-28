@@ -3,6 +3,7 @@ package com.bside.potenday.domain.common;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.http.ResponseEntity;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

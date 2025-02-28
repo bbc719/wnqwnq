@@ -21,7 +21,7 @@ public class FeedService {
     @Autowired
     private TopicRepository TopicRepository;
 
-    public LocalDate getRecAt(Long userId, Long interestId) {
+    public LocalDateTime getRecAt(Long userId, Long interestId) {
         UserInterest userInterestId = feedRepository.findByUserIdAndInterestId(userId, interestId);
 
         Optional<Topic> topic = TopicRepository.findDistinctByUserInterestId(userInterestId.getUserInterestId());
@@ -29,7 +29,7 @@ public class FeedService {
         if (topic.isPresent()) {
             return topic.get().getRecAt();
         } else {
-            return LocalDate.now();
+            return LocalDateTime.now();
         }
     }
 }

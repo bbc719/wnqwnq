@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 //https://wooj-coding-fordeveloper.tistory.com/76 참고
 @Entity
 @Table(name = "user")
-@NoArgsConstructor( access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class User {
     @Id
@@ -34,6 +34,8 @@ public class User {
     private Boolean marketingInfoAgree;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Transient
+    private boolean isNewUser;
 
     public User(String username, String email, String profileImg, UserOauth userOauth) {
         this.username = username;
@@ -60,5 +62,13 @@ public class User {
         this.nickname = nickname;
         this.job = Job.WORKER;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void setNewUser(boolean isNewUser) {
+        this.isNewUser = isNewUser;
+    }
+
+    public boolean isNewUser() {
+        return isNewUser;
     }
 }

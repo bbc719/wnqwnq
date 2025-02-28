@@ -1,7 +1,5 @@
 package com.bside.potenday.config;
 
-import com.bside.potenday.domain.auth.jwt.JwtAuthenticationFilter;
-import com.bside.potenday.domain.auth.jwt.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -23,14 +21,14 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true); // 자격 증명(쿠키, 인증 헤더 등)을 허용
     }
 
-    private final JwtProvider jwtProvider;
-
-    public WebConfig(JwtProvider jwtProvider) {
-        this.jwtProvider = jwtProvider;
-    }
-
-    @Bean
-    public Filter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtProvider);
-    }
+//    private final JwtProvider jwtProvider;
+//
+//    public WebConfig(JwtProvider jwtProvider) {
+//        this.jwtProvider = jwtProvider;
+//    }
+//
+//    @Bean
+//    public Filter jwtAuthenticationFilter() {
+//        return new JwtAuthenticationFilter(jwtProvider);
+//    }
 }

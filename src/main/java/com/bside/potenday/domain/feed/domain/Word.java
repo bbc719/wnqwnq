@@ -16,8 +16,10 @@ public class Word {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "word_key", nullable = false)
-    private Long topicId;
+    @Column(name = "word_id", nullable = false)
+    private Long wordId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
     @Column(name = "user_interest_id", nullable = false)
     private Long userInterestId;
     @Column(name = "word", nullable = false)
@@ -34,7 +36,8 @@ public class Word {
     @Column(name = "clicked_at", nullable = false)
     private LocalDateTime clickedAt;
 
-    public Word(Long userInterestId, String word, String wordMeaning, String pos, String exSentence, String exTranslate) {
+    public Word(Long userId, Long userInterestId, String word, String wordMeaning, String pos, String exSentence, String exTranslate) {
+        this.userId = userId;
         this.userInterestId = userInterestId;
         this.word = word;
         this.wordMeaning = wordMeaning;

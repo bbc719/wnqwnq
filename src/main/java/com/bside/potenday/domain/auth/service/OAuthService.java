@@ -4,20 +4,15 @@ import com.bside.potenday.domain.auth.domain.GoogleInfResponse;
 import com.bside.potenday.domain.auth.domain.GoogleRequest;
 import com.bside.potenday.domain.auth.domain.GoogleResponse;
 import com.bside.potenday.domain.auth.domain.Provider;
-import com.bside.potenday.domain.user.domain.Job;
 import com.bside.potenday.domain.user.domain.User;
 import com.bside.potenday.domain.user.domain.UserOauth;
 import com.bside.potenday.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,23 +34,26 @@ public class OAuthService {
     @Value("${oauth2.google.redirect-uri}")
     private String LOGIN_REDIRECT_URL;
 
-    public ResponseEntity<GoogleResponse> getGoogleAccessToken(String authCode) {
+    public User getGoogleAccessToken(String authCode) {
+        System.out.println("OAuth 요청 시 사용되는 redirectUri: " + LOGIN_REDIRECT_URL);
+        // 콘솔 출력 결과 : OAuth 요청 시 사용되는 redirectUri: http://localhost:3000/auth/google/callback
         RestTemplate restTemplate = new RestTemplate();
         GoogleRequest googleOAuthRequestParam = GoogleRequest
                 .builder()
                 .clientId(GOOGLE_CLIENT_ID)
                 .clientSecret(GOOGLE_CLIENT_SECRET)
                 .code(authCode)
-                .redirectUri("https://jubjub.kr/api/auth/callback")
+                .redirectUri(LOGIN_REDIRECT_URL)
                 .grantType("authorization_code").build();
 
+        // 400 Bad Request: "{<EOL>  "error": "redirect_uri_mismatch",<EOL>
         ResponseEntity<GoogleResponse> responseEntity = restTemplate.postForEntity(GOOGLE_TOKEN_URL,
                 googleOAuthRequestParam, GoogleResponse.class);
 
-        String jwtToken =  responseEntity.getBody().getId_token();  // id token (=jwt token, 디코딩 후 사용)
+        String idToken =  responseEntity.getBody().getId_token();  // id token (=jwt token, 디코딩 후 사용)
 
-        Map<String, String> map=new HashMap<>();
-        map.put("id_token",jwtToken);
+        Map<String, String> map = new HashMap<>();
+        map.put("id_token", idToken);
         ResponseEntity<GoogleInfResponse> responseInfEntity = restTemplate.postForEntity(GOOGLE_TOKEN_INFO_URL,
                 map, GoogleInfResponse.class);
 
@@ -69,21 +67,22 @@ public class OAuthService {
 
         Optional<User> optionalUser = userRepository.findByUserOauthProviderAndUserOauthProviderId(Provider.GOOGLE, providerId);
 
+        boolean isNewUser;
         User user;
+
         if (optionalUser.isPresent()) {
-            // 기존 사용자가 있다면, 필요한 정보(토큰 등) 갱신
             user = optionalUser.get();
-            // 예: user.getUserOauth().updateTokens(newAccessToken, newRefreshToken);
+            isNewUser = false;
+            // 기존 사용자라면 필요한 정보 갱신 가능
         } else {
-            // 신규 사용자 생성: UserOauth 내장 객체에 Google OAuth 정보 저장
+            isNewUser = true;
             UserOauth userOauth = new UserOauth(Provider.GOOGLE, providerId, responseEntity.getBody().getAccess_token(), responseEntity.getBody().getRefresh_token());
-            // 생성자에서 createdAt, updatedAt 등을 설정
             user = new User(username, email, profileImg, userOauth);
+            userRepository.save(user);
         }
+        user.setNewUser(isNewUser);
 
-        userRepository.save(user);
-
-        return responseEntity;
+        return user;
     }
 
 //    public ResponseEntity<GoogleResponse> processGoogleAccessToken(String accessToken) {
