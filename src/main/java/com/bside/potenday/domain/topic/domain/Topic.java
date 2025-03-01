@@ -1,13 +1,11 @@
-package com.bside.potenday.domain.feed.domain;
+package com.bside.potenday.domain.topic.domain;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,11 +28,21 @@ public class Topic {
     private String topicName;
     @Column(name = "rec_at")
     private LocalDateTime recAt;
+    @Column(name = "jubjub_yn", nullable = false)
+    private Boolean jubjubYn = false;
+    @Column(name = "jubjub_date")
+    private LocalDateTime jubjubDate;
 
     public Topic(Long userId, Long userInterestId, String topicName) {
         this.userId = userId;
         this.userInterestId = userInterestId;
         this.topicName = topicName;
         this.recAt = LocalDateTime.now();
+        this.jubjubYn = false;
+    }
+
+    public void updateJubjubStatus() {
+        this.jubjubYn = true;
+        this.jubjubDate = LocalDateTime.now();
     }
 }

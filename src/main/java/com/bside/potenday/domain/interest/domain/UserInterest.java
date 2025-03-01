@@ -21,8 +21,7 @@ public class UserInterest {
     @Column(name = "interest_id", nullable = false, unique = true)
     private Long interestId;
 
-    public UserInterest(Long userInterestId, Long userId, Long interestId) {
-        this.userInterestId = userInterestId;
+    public UserInterest(Long userId, Long interestId) {
         this.userId = userId;
         this.interestId = interestId;
     }

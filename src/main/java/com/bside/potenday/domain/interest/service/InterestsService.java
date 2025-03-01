@@ -7,6 +7,7 @@ import com.bside.potenday.domain.interest.repository.UserInterestsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,23 +25,22 @@ public class InterestsService {
         return interestsRepository.findAll();
     }
 
-    public void saveUserInterest(List<UserInterest> userInterests) {
-        List<UserInterest> newInterests = new ArrayList<>();
+    @Transactional
+    public void saveUserInterest(Long userId, List<Long> interestIds) {
+        List<UserInterest> updatedInterests = new ArrayList<>();
 
-        for (UserInterest userInterest : userInterests) {
-            boolean exists = userInterestsRepository.existsByUserIdAndInterestId(
-                    userInterest.getUserId(), userInterest.getInterestId()
-            );
+        for (Long interestId : interestIds) {
+            UserInterest userInterest = userInterestsRepository.findByUserIdAndInterestId(userId, interestId);
 
-            if (!exists) { // 존재하지 않을 경우에만 추가
-                newInterests.add(userInterest);
+            if (userInterest == null) {
+                userInterest = new UserInterest(userId, interestId);
+                updatedInterests.add(userInterest);
             }
         }
 
-        if (!newInterests.isEmpty()) {
-            userInterestsRepository.saveAll(newInterests);
+        if (!updatedInterests.isEmpty()) {
+            userInterestsRepository.saveAll(updatedInterests);
         }
-        //userInterestsRepository.saveAll(userInterests);
     }
 
     public List<UserInterest> getUserInterest(Long userId) {

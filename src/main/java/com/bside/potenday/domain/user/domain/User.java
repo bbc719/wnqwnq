@@ -5,7 +5,6 @@ import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-//https://wooj-coding-fordeveloper.tistory.com/76 참고
 @Entity
 @Table(name = "user")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -34,8 +33,8 @@ public class User {
     private Boolean marketingInfoAgree;
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    @Transient
-    private boolean isNewUser;
+    @Column(name = "is_completed")
+    private boolean isCompleted;
 
     public User(String username, String email, String profileImg, UserOauth userOauth) {
         this.username = username;
@@ -44,6 +43,7 @@ public class User {
         this.userOauth = userOauth;
         this.marketingInfoAgree = false;
         this.pushNotificationAgree = false;
+        this.isCompleted = false;
     }
 
     @PrePersist
@@ -60,15 +60,10 @@ public class User {
 
     public void updateNickName(String nickname) {
         this.nickname = nickname;
-        this.job = Job.WORKER;
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void setNewUser(boolean isNewUser) {
-        this.isNewUser = isNewUser;
-    }
-
-    public boolean isNewUser() {
-        return isNewUser;
+    public void updateIsCompleted() {
+        this.isCompleted = true;
     }
 }

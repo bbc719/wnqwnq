@@ -1,9 +1,8 @@
 package com.bside.potenday.domain.user.controller;
 
-import com.bside.potenday.domain.common.ApiResponse;
-import com.bside.potenday.domain.interest.domain.UserInterest;
+import com.bside.potenday.domain.common.ApiResult;
 import com.bside.potenday.domain.interest.service.InterestsService;
-import com.bside.potenday.domain.user.dto.UserProfileRequest;
+import com.bside.potenday.domain.user.domain.User;
 import com.bside.potenday.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -23,14 +23,26 @@ public class UserController {
     @Autowired
     private final InterestsService interestsService;
 
-    @PutMapping("/user")
-    @Operation(summary = "사용자 닉네임 저장", description = "사용자 닉네임 저장 메서드")
-    public ApiResponse<Void> updateUserProfile(@RequestBody UserProfileRequest request) {
-        userService.updateNickname(request);
-        return ApiResponse.successWithoutResponse(HttpStatus.OK.value());
+    @GetMapping("/{userId}/user")
+    @Operation(summary = "사용자 조회", description = "사용자 정보 조회 메서드")
+    public ApiResult<Optional<User>> getUser(@PathVariable Long userId) {
+        return ApiResult.successResponse(HttpStatus.OK.value(), userService.findByUserId(userId));
     }
 
-    @PostMapping("/interests")
+    @GetMapping("/{userId}/nickname")
+    @Operation(summary = "회원가입 완료 여부 확인", description = "회원가입이 완료되었는지 확인 후 닉네임 저장 혹은 피드 api를 호출한다.")
+    public ApiResult<Boolean> getIsCompleted(@PathVariable Long userId) {
+        return ApiResult.successResponse(HttpStatus.OK.value(), userService.getIsCompleted(userId));
+    }
+
+    @PutMapping("/{userId}/nickname")
+    @Operation(summary = "사용자 닉네임 저장", description = "사용자 닉네임 저장 메서드")
+    public ApiResult<Void> updateUserProfile(@PathVariable Long userId, @RequestParam("nickname") String nickname) {
+        userService.updateNickname(userId, nickname);
+        return ApiResult.successWithoutResponse(HttpStatus.OK.value());
+    }
+
+    @PostMapping("/{userId}/interests")
     @Operation(
             summary = "관심사 저장",
             description = "사용자별 관심사를 등록한다.",
@@ -39,8 +51,8 @@ public class UserController {
                     required = true
             )
     )
-    public ApiResponse<Void> saveUserInterest(@RequestBody List<UserInterest> userInterests) {
-        interestsService.saveUserInterest(userInterests);
-        return ApiResponse.successWithoutResponse(HttpStatus.OK.value());
+    public ApiResult<Void> saveUserInterest(@PathVariable Long userId, @RequestBody List<Long> interestIds) {
+        interestsService.saveUserInterest(userId, interestIds);
+        return ApiResult.successWithoutResponse(HttpStatus.OK.value());
     }
 }
