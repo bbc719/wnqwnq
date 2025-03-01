@@ -4,7 +4,6 @@ import com.bside.potenday.domain.topic.domain.Topic;
 import com.bside.potenday.domain.topic.dto.TopicDTO;
 import com.bside.potenday.domain.topic.dto.TopicDetailDTO;
 import com.bside.potenday.domain.topic.dto.TopicResponse;
-import com.bside.potenday.domain.word.domain.Word;
 import com.bside.potenday.domain.feed.dto.TimeSlotResponse;
 import com.bside.potenday.domain.topic.repository.TopicRepository;
 import com.bside.potenday.domain.word.repository.WordRepository;
@@ -30,7 +29,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
@@ -88,19 +86,18 @@ public class ClovaApiService {
                 timeSlotResponse.getTimeslotName(), timeSlotResponse.getDuration(), response);
     }
 
-    public WordResponse getClovaWordResponse(Long userId, Long interestId, String type) throws JsonProcessingException {
+    public WordResponse getClovaWordResponse(Long userId, Long interestId, String title) throws JsonProcessingException {
         TimeSlotResponse timeSlotResponse = getCurrentTimeSlot(userId);
         List<Map<String, Object>> messages = new ArrayList<>();
-        messages.add(setPromptForWords(userId, timeSlotResponse.getDuration(), interestId, type));
+        messages.add(setPromptForWords(userId, timeSlotResponse.getDuration(), interestId, title));
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(createRequestBody(messages), getHeaders());
         ResponseEntity<Map> response = new RestTemplate().postForEntity(apiUrl, requestEntity, Map.class);
 
-        return processWordResponse(userId, timeSlotResponse.getTimeslotName(), timeSlotResponse.getDuration(), response);
+        return processWordResponse(userId, interestId, timeSlotResponse.getTimeslotName(), timeSlotResponse.getDuration(), response);
     }
 
     private Map<String, Object> setPromptForTopics(Long userId, Long interestId, String interestName, int needCount) {
-        //int topicsPerInterest = needCount;
         List<UserInterest> userInterests = userInterestsRepository.findByUserId(userId);
         List<Interest> userInterestsList = interestsRepository.findByInterestIdIn(
                 userInterests.stream().map(UserInterest::getInterestId).collect(Collectors.toList()));
@@ -130,10 +127,7 @@ public class ClovaApiService {
         return systemMessage;
     }
 
-    private Map<String, Object> setPromptForWords(Long userId, String duration, Long interestId, String type) {
-//        int totalWords = (duration.isBlank() || Integer.parseInt(duration) <= 10)
-//                ? 5
-//                : Math.min(Integer.parseInt(duration) / 2, 30);
+    private Map<String, Object> setPromptForWords(Long userId, String duration, Long interestId, String title) {
         int totalWords = 10;
 
         StringBuilder jsonFormat = new StringBuilder("{ \"contents\": [\n");
@@ -151,17 +145,17 @@ public class ClovaApiService {
         }
         jsonFormat.append("\n  ] }\n]}");
 
-        // 클로바에 보낼 시스템 메시지 생성
         Map<String, Object> systemMessage = new HashMap<>();
         systemMessage.put("role", "system");
         systemMessage.put("content", String.format(
-                "너는 28세~36세 사이인 직장인의 관심사인 " + type + "에 대한 단어를 추천해주는 AI 비서다. "
+                "너는 28세~36세 사이인 직장인의 관심사인 " + title + "에 대한 단어를 추천해주는 AI 비서다. "
                         + "해당 관심사에 대한 단어(word)와 단어의 meaning, pos, example, translation을 함께 추천해준다. " +
                         " meaning은 word의 한국어 뜻, example은 해당 단어를 활용한 예시 문장, translation은 example의 한국어 해석이다.\n"
                         + "pos는 형용사, 부사, 명사, 동사로 한정한다. 각 표기는 adj., n., v., adv.로 표기한다.\n"
-                        + "출력 형식 (JSON): \n%s\n\n", jsonFormat.toString()));
+                        + "단어는 %d개를 추천한다.\n"
+                        + "출력 형식 (JSON): \n%s\n\n", totalWords, jsonFormat.toString()));
 
-        return systemMessage;
+            return systemMessage;
     }
 
     private HttpHeaders getHeaders() {
@@ -175,10 +169,10 @@ public class ClovaApiService {
     private Map<String, Object> createRequestBody(List<Map<String, Object>> messages) {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("messages", messages);
-        requestBody.put("topP", 0.6);
-        requestBody.put("temperature", 0.3);
-        requestBody.put("maxTokens", 2000);
-        requestBody.put("repeatPenalty", 1.0);
+        requestBody.put("topP", 0.5);
+        requestBody.put("temperature", 0.5);
+        requestBody.put("maxTokens", 700);
+        requestBody.put("repeatPenalty", 1.3);
         return requestBody;
     }
 
@@ -235,79 +229,47 @@ public class ClovaApiService {
         return topicResponse;
     }
 
-//    private WordResponse processWordResponse(Long userId, Long interestId, String timeSlotName,
-//                                             String duration, ResponseEntity<Map> response) throws JsonProcessingException {
-//        WordResponse wordResponse = new WordResponse(userId, timeSlotName, duration, new ArrayList<>());
-//        Map<String, Object> responseBody = response.getBody();
-//
-//        if (responseBody != null) {
-//            Map<String, Object> responseResult = (Map<String, Object>) responseBody.get("result");
-//            Map<String, Object> responseMessage = (Map<String, Object>) responseResult.get("message");
-//            String jsonResult = (String) responseMessage.get("content");
-//            jsonResult = cleanJsonString(jsonResult);
-//
-//            ObjectMapper objectMapper = new ObjectMapper();
-//            JsonNode rootNode = objectMapper.readTree(jsonResult);
-//            try {
-//                rootNode = objectMapper.readTree(jsonResult);
-//            } catch (JsonProcessingException e) {
-//                throw new RuntimeException("JSON 변환 실패: 응답 데이터가 올바른 JSON 형식이 아닙니다.\n응답 데이터: " + jsonResult, e);
-//            }
-//
-//            List<WordDTO> wordDTOList = new ArrayList<>();
-//            for (JsonNode node : rootNode) {
-//                WordDTO wordDTO = new WordDTO();
-//                wordDTO.setInterestId(interestId);
-//
-//                JsonNode wordListNode = node.get("wordList");
-//                if (wordListNode != null && wordListNode.isArray()) {
-//                    List<WordDetailDTO> wordList = objectMapper.readValue(
-//                            wordListNode.toString(), new TypeReference<List<WordDetailDTO>>() {}
-//                    );
-//                    wordDTO.setWords(wordList);
-//                }
-//
-//                wordDTOList.add(wordDTO);
-//            }
-//            wordResponse.setWords(wordDTOList);
-//        }
-//        return wordResponse;
-//    }
-
-    private WordResponse processWordResponse(Long userId, String timeSlotName,
+    private WordResponse processWordResponse(Long userId, Long interestId, String timeSlotName,
                                              String duration, ResponseEntity<Map> response) throws JsonProcessingException {
-        WordResponse wordResponse = new WordResponse();
-        wordResponse.setUserId(userId);
-        wordResponse.setTimeSlotName(timeSlotName);
-        wordResponse.setDuration(duration);
-
+        WordResponse wordResponse = new WordResponse(userId, timeSlotName, duration, interestId, new ArrayList<>());
         Map<String, Object> responseBody = response.getBody();
 
         if (responseBody != null) {
             Map<String, Object> responseResult = (Map<String, Object>) responseBody.get("result");
             Map<String, Object> responseMessage = (Map<String, Object>) responseResult.get("message");
             String jsonResult = (String) responseMessage.get("content");
+            jsonResult = cleanJsonString(jsonResult);
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(jsonResult);
 
-            JsonNode interestIdNode = rootNode.get("interestId");
-            JsonNode interestNameNode = rootNode.get("interestName");
-            JsonNode wordListNode = rootNode.get("wordList");
-
-            if (interestIdNode != null) {
-                wordResponse.setInterestId(interestIdNode.asLong());
+            JsonNode contentsNode = rootNode.get("contents");
+            if (contentsNode == null || !contentsNode.isArray()) {
+                throw new RuntimeException("Invalid response format: 'contents' key not found or not an array.");
             }
 
-            if (wordListNode != null && wordListNode.isArray()) {
-                List<WordDetailDTO> wordList = objectMapper.readValue(
-                        wordListNode.toString(), new TypeReference<List<WordDetailDTO>>() {}
-                );
-                wordResponse.setWordList(wordList);
+            List<WordDTO> wordDTOList = new ArrayList<>();
+            for (JsonNode node : contentsNode) {
+                WordDTO wordDTO = new WordDTO();
+                wordDTO.setInterestId(interestId);
+
+                JsonNode wordListNode = node.get("wordList");
+                if (wordListNode != null && wordListNode.isArray()) {
+                    List<WordDetailDTO> wordList = objectMapper.readValue(
+                            wordListNode.toString(), new TypeReference<List<WordDetailDTO>>() {}
+                    );
+                    wordDTO.setWordList(wordList);  // ✅ 여기서 setter 사용
+                }
+
+                wordDTOList.add(wordDTO);
             }
+
+            wordResponse.setWordList(wordDTOList);  // ✅ WordResponse의 wordList에도 setter 사용
         }
         return wordResponse;
     }
+
+
 
     private String cleanJsonString(String json) {
         if (json == null || json.isBlank()) {
@@ -320,41 +282,41 @@ public class ClovaApiService {
         return json;
     }
 
-    private void saveWords(Long userId, WordDTO wordDTO) {
-        for (WordDetailDTO wordDetail : wordDTO.getWords()) {
-            int retryCount = 0;
-            boolean success = false;
-
-            while (retryCount < MAX_RETRIES && !success) {
-                try {
-                    Word wordEntity = new Word(
-                            userId,
-                            wordDTO.getInterestId(),
-                            wordDetail.getWord(),
-                            wordDetail.getMeaning(),
-                            wordDetail.getPos(),
-                            wordDetail.getEx(),
-                            wordDetail.getTr()
-                    );
-                    wordRepository.save(wordEntity);
-                    success = true;
-                } catch (HttpClientErrorException.TooManyRequests e) {
-                    retryCount++;
-                    int waitTime = (int) Math.pow(2, retryCount) * 1000;
-                    System.out.println("⏳ 요청 제한 초과(429), " + waitTime + "ms 후 재시도(" + retryCount + "/" + MAX_RETRIES + ")");
-                    try {
-                        Thread.sleep(waitTime);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            }
-
-            if (!success) {
-                System.err.println("단어 저장 실패: " + wordDetail.getWord());
-            }
-        }
-    }
+//    private void saveWords(Long userId, WordDTO wordDTO) {
+//        for (WordDetailDTO wordDetail : wordDTO.getWords()) {
+//            int retryCount = 0;
+//            boolean success = false;
+//
+//            while (retryCount < MAX_RETRIES && !success) {
+//                try {
+//                    Word wordEntity = new Word(
+//                            userId,
+//                            wordDTO.getInterestId(),
+//                            wordDetail.getWord(),
+//                            wordDetail.getMeaning(),
+//                            wordDetail.getPos(),
+//                            wordDetail.getEx(),
+//                            wordDetail.getTr()
+//                    );
+//                    wordRepository.save(wordEntity);
+//                    success = true;
+//                } catch (HttpClientErrorException.TooManyRequests e) {
+//                    retryCount++;
+//                    int waitTime = (int) Math.pow(2, retryCount) * 1000;
+//                    System.out.println("⏳ 요청 제한 초과(429), " + waitTime + "ms 후 재시도(" + retryCount + "/" + MAX_RETRIES + ")");
+//                    try {
+//                        Thread.sleep(waitTime);
+//                    } catch (InterruptedException ie) {
+//                        Thread.currentThread().interrupt();
+//                    }
+//                }
+//            }
+//
+//            if (!success) {
+//                System.err.println("단어 저장 실패: " + wordDetail.getWord());
+//            }
+//        }
+//    }
 
     private TimeSlotResponse getCurrentTimeSlot(Long userId) {
         LocalTime now = LocalTime.now();

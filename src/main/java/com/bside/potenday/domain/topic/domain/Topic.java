@@ -41,8 +41,9 @@ public class Topic {
         this.jubjubYn = false;
     }
 
-    public void updateJubjubStatus() {
+    public void completeJubjub() {
         this.jubjubYn = true;
         this.jubjubDate = LocalDateTime.now();
+        this.recAt = LocalDateTime.now();
     }
 }

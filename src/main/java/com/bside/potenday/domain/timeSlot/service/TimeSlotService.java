@@ -2,6 +2,7 @@ package com.bside.potenday.domain.timeSlot.service;
 
 import com.bside.potenday.domain.timeSlot.domain.TimeSlotTemplate;
 import com.bside.potenday.domain.timeSlot.repository.TimeSlotRepository;
+import com.bside.potenday.domain.topic.repository.TopicRepository;
 import com.bside.potenday.domain.user.domain.User;
 import com.bside.potenday.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +23,8 @@ public class TimeSlotService {
     private TimeSlotRepository timeSlotRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private TopicRepository topicRepository;
 
     @Transactional
     public void createOrUpdateTimeSlot(Long userId, List<TimeSlotTemplate> timeSlots) {
@@ -39,4 +45,16 @@ public class TimeSlotService {
         userRepository.save(user);
     }
 
+    public Map<String, Integer> getTotalTimeSlotMinutesAndJubjubTime(Long userId) {
+        int totalAvailableMinutes = timeSlotRepository.findByUserId(userId).stream()
+                .mapToInt(slot -> (int) ChronoUnit.MINUTES.between(slot.getStartTime(), slot.getEndTime()))
+                .sum();
+
+        int totalJubjubMinutes = (int) topicRepository.countJubjubTopicsByUserId(userId) * 10;
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("totalTimeSlotMinutes", totalAvailableMinutes);
+        result.put("totalJubjubMinutes", totalJubjubMinutes);
+        return result;
+    }
 }

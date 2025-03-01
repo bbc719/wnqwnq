@@ -18,15 +18,16 @@ public class WordDTO {
     @JsonProperty("interestId")
     @Schema(description = "사용자의 관심사 ID", example = "1")
     private Long interestId;
+
     @JsonProperty("wordList")
     @Schema(description = "추천 단어 목록")
-    private List<WordDetailDTO> words;
+    private List<WordDetailDTO> wordList;
 
     @JsonSetter("interestId")
     public void setInterestIdFromString(String interestId) {
         if (interestId == null || interestId.isBlank()) {
-            System.err.println("⚠️ Warning: interestId is null or empty in JSON response");
-            this.interestId = 0L; // 기본값 설정
+            System.err.println("Warning: interestId is null or empty in JSON response");
+            this.interestId = 0L;
         } else {
             this.interestId = Long.parseLong(interestId);
         }

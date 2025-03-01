@@ -28,7 +28,7 @@ public class WordResponse {
     @JsonProperty("interestId")
     @Schema(description = "관심사 ID", example = "1")
     private Long interestId;
-    @JsonProperty("wordList")
+    @JsonProperty("wordList") // ✅ 필드명이 "wordList"임!
     @Schema(description = "추천된 단어 목록")
-    private List<WordDetailDTO> wordList;
+    private List<WordDTO> wordList;
 }
